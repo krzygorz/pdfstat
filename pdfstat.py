@@ -40,7 +40,7 @@ class PdfStat:
         self.db = SqlDB(db_path)
         self.zhist = ZathuraHistory(zhist_path)
     def make_entry(self, path):
-        hist_entry = self.zhist.get(path)
+        hist_entry = self.zhist.get_by_path(path)
         return LogEntry(hist_entry.page, datetime.now())
     def track(self, path):
         if self.db.is_tracked(path):
@@ -84,10 +84,10 @@ def main():
     parser_show = subparsers.add_parser('show', help="Display the statistics for tracked documents.")
 
     parser_track = subparsers.add_parser('track', help="Add a new file to the list of tracked documents.")
-    parser_track.add_argument('path')
+    parser_track.add_argument('path', type=os.path.abspath)
 
     parser_forget = subparsers.add_parser('forget', help="Remove the document's data from database.")
-    parser_forget.add_argument('path')
+    parser_forget.add_argument('path', type=os.path.abspath)
     args = parser.parse_args()
 
     app = PdfStat(db_path, zathura_hist_path)
