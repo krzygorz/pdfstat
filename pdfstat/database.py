@@ -36,8 +36,6 @@ class SqlDB:
         cursor = self._conn.cursor()
         cursor.execute("SELECT 1 FROM logs WHERE path=?", (path,))
         return True if cursor.fetchone() else False
-    # def delete(self, path):
-    #     self._conn.execute
     def save(self):
         self._conn.commit()
 

@@ -3,8 +3,8 @@ from pathlib import Path
 import os
 import sys
 from datetime import datetime
-from database import SqlDB, LogEntry
-from docs import ZathuraHistory, total_pages
+from pdfstat.database import SqlDB, LogEntry
+from pdfstat.documents import ZathuraHistory, HistKeyError, total_pages
 import argparse
 
 def trunc(string, n, ell='.. '):
@@ -17,8 +17,7 @@ def format_rate(pages, days):
     else:
         return f"{days/pages:g} days/page"
 
-def printStats(path, log):
-    total = total_pages(path)
+def printStats(path, log, total):
     first = log[0]
     last = log[-1]
 
@@ -55,21 +54,38 @@ class PdfStat:
     def should_overwrite(self, path):
         entry_day = self.db.last_entry(path).time.day
         return entry_day == datetime.now().day
-    def update_all(self):
-        for path in self.db.tracked():
-            entry = self.make_entry(path)
-            if self.should_overwrite(path):
-                self.db.update(path, entry)
-            else:
-                self.db.insert(path, entry)
+    def update(self, path):
+        entry = self.make_entry(path)
+        if self.should_overwrite(path):
+            self.db.update(path, entry)
+        else:
+            self.db.insert(path, entry)
 
 zathura_hist_path = Path("~/.local/share/zathura/history").expanduser()
 db_path = Path("data.db")
 
+def error(msg, code):
+    print(msg, file=sys.stderr)
+    sys.exit(code)
+
 def cmd_show(app):
     for path in app.db.tracked():
-        log = app.db.doc_data(path)
-        printStats(path, log)
+        try:
+            total = total_pages(path)
+        except FileNotFoundError:
+            print("WARNING: File missing:", path, file=sys.stderr)
+        else:
+            log = app.db.doc_data(path)
+            printStats(path, log, total)
+def cmd_update(app):
+    for path in app.db.tracked():
+        if os.path.exists(path):
+            try:
+                app.update(path)
+            except HistKeyError:
+                print("WARNING: \"{}\" not found in zathura history!")
+        else:
+            print("WARNING: File missing:", path, file=sys.stderr)
 def cmd_track(app, path):
     if not app.track(path):
         sys.exit("File is already tracked!")
@@ -79,7 +95,7 @@ def cmd_forget(app, path):
 
 def main():
     parser = argparse.ArgumentParser(description="Track progress of reading pdf documents.")
-    subparsers = parser.add_subparsers(dest='command')
+    subparsers = parser.add_subparsers(dest='command', required=True)
     parser_update = subparsers.add_parser('update', help="Save current page and time for all tracked documents.")
     parser_show = subparsers.add_parser('show', help="Display the statistics for tracked documents.")
 
@@ -91,15 +107,16 @@ def main():
     args = parser.parse_args()
 
     app = PdfStat(db_path, zathura_hist_path)
-    if args.command == 'update':
-        app.update_all()
-    elif args.command == 'show':
-        cmd_show(app)
-    elif args.command == 'track':
-        cmd_track(app, args.path)
-    elif args.command == 'forget':
-        cmd_forget(app, args.path)
+    try:
+        if args.command == 'update':
+            cmd_update(app)
+        elif args.command == 'show':
+            cmd_show(app)
+        elif args.command == 'track':
+            cmd_track(app, args.path)
+        elif args.command == 'forget':
+            cmd_forget(app, args.path)
+    except HistKeyError as e:
+        error("Error: \"{}\" not found in zathura history!".format(e.path), 2)
 
     app.db.save()
-
-main()
