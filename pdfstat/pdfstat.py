@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-from pathlib import Path
 import os
 import sys
 from datetime import datetime
@@ -61,9 +60,6 @@ class PdfStat:
         else:
             self.db.insert(path, entry)
 
-zathura_hist_path = Path("~/.local/share/zathura/history").expanduser()
-db_path = Path("data.db")
-
 def error(msg, code):
     print(msg, file=sys.stderr)
     sys.exit(code)
@@ -93,18 +89,30 @@ def cmd_forget(app, path):
     if not app.forget(path):
         sys.exit("File is not tracked!")
 
+default_zhist_path = "~/.local/share/zathura/history"
+default_db_path = "~/.share/pdfstat.db"
+
+def normalized_path(path):
+    # Uses abspath instead of realpath because that's how Zathura appears to normalize file names
+    return os.path.abspath(os.path.expanduser(path))
+
 def main():
     parser = argparse.ArgumentParser(description="Track progress of reading pdf documents.")
+    parser.add_argument("--db", type=os.path.expanduser, help="Set path to the database. Defaults to "+default_db_path)
+    parser.add_argument("--zhist", type=os.path.expanduser, help="Set path to zathura history file. Defaults to "+default_zhist_path)
     subparsers = parser.add_subparsers(dest='command', required=True)
     parser_update = subparsers.add_parser('update', help="Save current page and time for all tracked documents.")
     parser_show = subparsers.add_parser('show', help="Display the statistics for tracked documents.")
 
     parser_track = subparsers.add_parser('track', help="Add a new file to the list of tracked documents.")
-    parser_track.add_argument('path', type=os.path.abspath)
+    parser_track.add_argument('path', type=normalized_path)
 
     parser_forget = subparsers.add_parser('forget', help="Remove the document's data from database.")
-    parser_forget.add_argument('path', type=os.path.abspath)
+    parser_forget.add_argument('path', type=normalized_path)
     args = parser.parse_args()
+
+    zathura_hist_path = args.zhist or os.path.expanduser(default_zhist_path)
+    db_path = args.db or os.path.expanduser(default_db_path)
 
     app = PdfStat(db_path, zathura_hist_path)
     try:

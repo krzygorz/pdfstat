@@ -22,10 +22,9 @@ class HistKeyError(LookupError):
 
 ZHistEntry = namedtuple("ZHistEntry", "page time_opened")
 class ZathuraHistory:
-    def __init__(self, path):
+    def __init__(self, hist_path):
         self._raw = configparser.ConfigParser()
-        with path.open() as histfile:
-            self._raw.read_file(histfile)
+        self._raw.read(hist_path)
     def get_by_path(self, path):
         try:
             entry = self._raw[path]
