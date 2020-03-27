@@ -1,7 +1,7 @@
-from pathlib import Path
 from functools import namedtuple
 from datetime import datetime
 import sqlite3
+import os
 
 LogEntry = namedtuple("LogEntry", "page time")
 
@@ -10,6 +10,7 @@ def make_entry(page, timestamp):
 
 class SqlDB:
     def __init__(self, db_path):
+        os.makedirs(os.path.dirname(db_path), exist_ok=True)
         self._conn = sqlite3.connect(str(db_path))
         self._conn.execute("CREATE TABLE IF NOT EXISTS logs (path text, page integer, time integer)")
         # self._conn.execute("CREATE TABLE IF NOT EXISTS metadata (path text, numpages integer)")

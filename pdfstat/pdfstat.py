@@ -92,14 +92,15 @@ def cmd_forget(app, path):
 default_zhist_path = "~/.local/share/zathura/history"
 default_db_path = "~/.share/pdfstat.db"
 
+# Uses abspath instead of realpath because that's how Zathura appears to normalize file names (ie no symlink resolution)
 def normalized_path(path):
-    # Uses abspath instead of realpath because that's how Zathura appears to normalize file names
     return os.path.abspath(os.path.expanduser(path))
 
 def main():
     parser = argparse.ArgumentParser(description="Track progress of reading pdf documents.")
-    parser.add_argument("--db", type=os.path.expanduser, help="Set path to the database. Defaults to "+default_db_path)
+    parser.add_argument("--db", type=normalized_path, help="Set path to the database. Defaults to "+default_db_path)
     parser.add_argument("--zhist", type=os.path.expanduser, help="Set path to zathura history file. Defaults to "+default_zhist_path)
+
     subparsers = parser.add_subparsers(dest='command', required=True)
     parser_update = subparsers.add_parser('update', help="Save current page and time for all tracked documents.")
     parser_show = subparsers.add_parser('show', help="Display the statistics for tracked documents.")
@@ -109,8 +110,8 @@ def main():
 
     parser_forget = subparsers.add_parser('forget', help="Remove the document's data from database.")
     parser_forget.add_argument('path', type=normalized_path)
-    args = parser.parse_args()
 
+    args = parser.parse_args()
     zathura_hist_path = args.zhist or os.path.expanduser(default_zhist_path)
     db_path = args.db or os.path.expanduser(default_db_path)
 
