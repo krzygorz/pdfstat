@@ -19,12 +19,19 @@ def total_pages(path):
 class HistKeyError(LookupError):
     def __init__(self, path):
         self.path = path
+class HistFileNotFoundError(FileNotFoundError):
+    def __init__(self, path):
+        self.path = path
 
 ZHistEntry = namedtuple("ZHistEntry", "page time_opened")
 class ZathuraHistory:
     def __init__(self, hist_path):
         self._raw = configparser.ConfigParser()
-        self._raw.read(hist_path)
+        try:
+            with open(hist_path) as f:
+                self._raw.read_file(f)
+        except FileNotFoundError:
+            raise HistFileNotFoundError(hist_path)
     def get_by_path(self, path):
         try:
             entry = self._raw[path]

@@ -3,7 +3,8 @@ import os
 import sys
 from datetime import datetime
 from pdfstat.database import SqlDB, LogEntry
-from pdfstat.documents import ZathuraHistory, HistKeyError, total_pages
+from pdfstat.documents import ZathuraHistory, HistKeyError, HistFileNotFoundError, total_pages
+from xdg import XDG_DATA_HOME
 import argparse
 
 def trunc(string, n, ell='.. '):
@@ -89,8 +90,9 @@ def cmd_forget(app, path):
     if not app.forget(path):
         sys.exit("File is not tracked!")
 
-default_zhist_path = "~/.local/share/zathura/history"
-default_db_path = "~/.local/share/pdfstat.db"
+#TODO: use pathlib
+default_zhist_path = str(XDG_DATA_HOME/"zathura/history")
+default_db_path = str(XDG_DATA_HOME/"pdfstat.db")
 
 # Uses abspath instead of realpath because that's how Zathura appears to normalize file names (ie no symlink resolution)
 def normalized_path(path):
@@ -114,8 +116,11 @@ def main():
     args = parser.parse_args()
     zathura_hist_path = args.zhist or os.path.expanduser(default_zhist_path)
     db_path = args.db or os.path.expanduser(default_db_path)
+    try:
+        app = PdfStat(db_path, zathura_hist_path)
+    except HistFileNotFoundError as e:
+        error("Zathura history file not found: {}".format(e.path), 2)
 
-    app = PdfStat(db_path, zathura_hist_path)
     try:
         if args.command == 'update':
             cmd_update(app)
