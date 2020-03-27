@@ -90,7 +90,7 @@ def cmd_forget(app, path):
         sys.exit("File is not tracked!")
 
 default_zhist_path = "~/.local/share/zathura/history"
-default_db_path = "~/.share/pdfstat.db"
+default_db_path = "~/.local/share/pdfstat.db"
 
 # Uses abspath instead of realpath because that's how Zathura appears to normalize file names (ie no symlink resolution)
 def normalized_path(path):
