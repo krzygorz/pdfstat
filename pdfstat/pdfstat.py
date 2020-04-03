@@ -25,7 +25,7 @@ def printStats(path, log, total):
     delta_p = last.page - first.page
     percent = last.page/total * 100
 
-    if delta_p == 0:
+    if delta_p == 0 or delta_t.days < 1:
         print("{}: {}/{} ({:.0f}%)".format(trunc(os.path.basename(path), 40), last.page, total, percent))
     else:
         pages_left = total - last.page
@@ -34,8 +34,12 @@ def printStats(path, log, total):
         rate_str = format_rate(delta_p, delta_t.days)
         print("{}: {}/{} ({:.0f}%) - {}, {} days left".format(trunc(os.path.basename(path), 40), last.page, total, percent, rate_str, time_left))
 
+#TODO: use pathlib
+default_zhist_path = str(XDG_DATA_HOME/"zathura/history")
+default_db_path = str(XDG_DATA_HOME/"pdfstat.db")
+
 class PdfStat:
-    def __init__(self, db_path, zhist_path):
+    def __init__(self, db_path=default_db_path, zhist_path=default_zhist_path):
         self.db = SqlDB(db_path)
         self.zhist = ZathuraHistory(zhist_path)
     def make_entry(self, path):
@@ -89,10 +93,6 @@ def cmd_track(app, path):
 def cmd_forget(app, path):
     if not app.forget(path):
         sys.exit("File is not tracked!")
-
-#TODO: use pathlib
-default_zhist_path = str(XDG_DATA_HOME/"zathura/history")
-default_db_path = str(XDG_DATA_HOME/"pdfstat.db")
 
 # Uses abspath instead of realpath because that's how Zathura appears to normalize file names (ie no symlink resolution)
 def normalized_path(path):

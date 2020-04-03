@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+from pathlib import Path
+from html import escape
+import subprocess
+import re
+
+from pdfstat import pdfstat
+
+def trunc_pad(string, n, fill=' ', ell='<span weight="normal">..</span>', ell_len=2):
+    if len(string) > n-ell_len:
+        return escape(string[:n-ell_len]) + ell
+    else:
+        return escape(string.ljust(n, fill))
+
+def pretty_title(filename, padlen, maxlen=20):
+    full_title = filename.replace('\n', ' ')\
+                         .replace('_', ' ')
+
+    padded = trunc_pad(full_title, padlen)
+    result = re.split("(: | - )", padded, 1)
+    if len(result) > 1 and len(full_title) > maxlen:
+        title, sep, subtitle = result
+        return '<b>{}</b><span color="gray">{}{}</span>'.format(title, sep, subtitle)
+    else:
+        return '<b>{}</b>'.format(padded)
+
+root = Path('~/pdfs/').expanduser()
+files = [file for file in root.rglob('*') if file.is_file()]
+files.sort(key=lambda x: x.stat().st_atime, reverse=True)
+
+rofi_cmd = "rofi -dmenu -markup-rows -format i -i -p 'Document' -theme Arc -width 60"
+rofi_proc = subprocess.Popen(rofi_cmd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+for file in files:
+    directory = str(file.relative_to(root).parent)
+    line = pretty_title(file.stem, 80) + ' ' + escape(directory) + '\n'
+    rofi_proc.stdin.write(line.encode())
+rofi_proc.stdin.close()
+response = rofi_proc.stdout.readline()
+rofi_proc.stdout.close()
+
+if not response:
+    exit()
+selected = files[int(response)]
+selected.touch()
+subprocess.run(['zathura', str(selected)])
+
+ps = pdfstat.PdfStat()
+p = pdfstat.normalized_path(selected)
+if ps.db.is_tracked(p):
+    ps.update(pdfstat.normalized_path(selected))
+    ps.db.save()
