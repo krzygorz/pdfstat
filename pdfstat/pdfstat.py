@@ -7,17 +7,17 @@ from xdg import XDG_DATA_HOME
 
 from pdfstat.database import SqlDB, LogEntry
 from pdfstat.documents import ZathuraHistory, HistKeyError, HistFileNotFoundError, total_pages
-from pdfstat.rate import days_per_page
+from pdfstat.rate import pages_per_day
 
 def trunc(string, n, ell='.. '):
     maxlen = n-len(ell)
     return string[:maxlen] + ell if len(string) > maxlen else string
 
 def format_rate(rate):
-    if rate < .5:
-        return f"{1/rate:.2f} pages/day"
+    if rate > .5:
+        return f"{rate:.2f} pages/day"
     else:
-        return f"{rate:.2f} days/page"
+        return f"{1/rate:.2f} days/page"
 
 def printStats(path, log, total):
     current_page = log[-1].page
@@ -25,11 +25,11 @@ def printStats(path, log, total):
     short_name = trunc(os.path.basename(path), 40)
     basic_descr = "{}: {}/{} ({:.0f}%)".format(short_name, current_page, total, percent)
 
-    if not (rate := days_per_page(log)):
+    if not (rate := pages_per_day(reversed(log))):
         print(basic_descr)
     else:
         pages_left = total - current_page
-        time_left = rate * pages_left
+        time_left = pages_left/rate
 
         rate_str = format_rate(rate)
         print(basic_descr+" - {}, {:.0f} days left".format(rate_str, time_left))
