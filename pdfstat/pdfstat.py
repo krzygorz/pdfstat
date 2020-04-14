@@ -1,38 +1,38 @@
 #!/usr/bin/env python3
 import os
 import sys
+import argparse
 from datetime import datetime
+from xdg import XDG_DATA_HOME
+
 from pdfstat.database import SqlDB, LogEntry
 from pdfstat.documents import ZathuraHistory, HistKeyError, HistFileNotFoundError, total_pages
-from xdg import XDG_DATA_HOME
-import argparse
+from pdfstat.rate import days_per_page
 
 def trunc(string, n, ell='.. '):
     maxlen = n-len(ell)
     return string[:maxlen] + ell if len(string) > maxlen else string
 
-def format_rate(pages, days):
-    if pages > days:
-        return f"{pages/days:g} pages/day"
+def format_rate(rate):
+    if rate < .5:
+        return f"{1/rate:.2f} pages/day"
     else:
-        return f"{days/pages:g} days/page"
+        return f"{rate:.2f} days/page"
 
 def printStats(path, log, total):
-    first = log[0]
-    last = log[-1]
+    current_page = log[-1].page
+    percent = current_page/total * 100
+    short_name = trunc(os.path.basename(path), 40)
+    basic_descr = "{}: {}/{} ({:.0f}%)".format(short_name, current_page, total, percent)
 
-    delta_t = datetime.now() - first.time #TODO: abstract out rate calculations
-    delta_p = last.page - first.page
-    percent = last.page/total * 100
-
-    if delta_p == 0 or delta_t.days < 1:
-        print("{}: {}/{} ({:.0f}%)".format(trunc(os.path.basename(path), 40), last.page, total, percent))
+    if not (rate := days_per_page(log)):
+        print(basic_descr)
     else:
-        pages_left = total - last.page
-        time_left = delta_t.days/delta_p * pages_left
+        pages_left = total - current_page
+        time_left = rate * pages_left
 
-        rate_str = format_rate(delta_p, delta_t.days)
-        print("{}: {}/{} ({:.0f}%) - {}, {} days left".format(trunc(os.path.basename(path), 40), last.page, total, percent, rate_str, time_left))
+        rate_str = format_rate(rate)
+        print(basic_descr+" - {}, {:.0f} days left".format(rate_str, time_left))
 
 #TODO: use pathlib
 default_zhist_path = str(XDG_DATA_HOME/"zathura/history")
