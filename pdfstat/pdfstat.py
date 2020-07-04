@@ -105,8 +105,8 @@ def main():
     parser.add_argument("--zhist", type=normalized_path, help="Set path to zathura history file. Defaults to "+default_zhist_path)
 
     subparsers = parser.add_subparsers(dest='command', required=True)
-    parser_update = subparsers.add_parser('update', help="Save current page and time for all tracked documents.")
-    parser_show = subparsers.add_parser('show', help="Display the statistics for tracked documents.")
+    parser_update = subparsers.add_parser('update', help="Save current page and time for all tracked documents.") #pylint:disable=unused-variable
+    parser_show = subparsers.add_parser('show', help="Display the statistics for tracked documents.")  #pylint:disable=unused-variable
 
     parser_track = subparsers.add_parser('track', help="Add a new file to the list of tracked documents.")
     parser_track.add_argument('path', type=normalized_path)
