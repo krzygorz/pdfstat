@@ -18,7 +18,7 @@ class SqlDB:
         return [a for (a,) in self._conn.execute("SELECT DISTINCT path FROM logs")]
     def doc_data(self, path):
         cursor = self._conn.cursor()
-        cursor.execute("SELECT page, time FROM logs WHERE path=? ORDER BY time ASC", (path,))
+        cursor.execute("SELECT page, time FROM logs WHERE path=? ORDER BY time DESC", (path,))
         log = [make_entry(page, timestamp) for (page, timestamp) in cursor]
         return log
     def last_entry(self, path):

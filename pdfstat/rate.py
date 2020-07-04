@@ -1,15 +1,10 @@
 from functools import namedtuple
-from itertools import tee, chain
-
-Diff = namedtuple("Diff", "pages time")
+from itertools import tee
 
 def pairwise(iterable):
     a, b = tee(iterable)
     next(b, None)
     return zip(a, b)
-def peek(iterable):
-    x = next(iterable)
-    return x, chain([x], iterable)
 
 def weighted(pairs):
     s = 0
@@ -20,9 +15,9 @@ def weighted(pairs):
     return s/total_weight
 
 def pages_per_day(hist, factor=.8):
-    mostrecent, hist = peek(hist) # kinda hacky
+    reference_time = hist[0].time
     def weight(entry):
-        return factor**(mostrecent.time-entry.time).days
+        return factor**(reference_time-entry.time).days
 
     return weighted(
         (a.page-b.page, weight(a)) for a,b in pairwise(hist)

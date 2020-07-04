@@ -19,21 +19,22 @@ def format_rate(rate):
         return f"{rate:.2f} pages/day"
     else:
         return f"{1/rate:.2f} days/page"
+def sane_rate(rate):
+    return rate > 1/25
 
 def printStats(path, log, total):
-    current_page = log[-1].page
+    current_page = log[0].page
     percent = current_page/total * 100
     short_name = trunc(os.path.basename(path), 40)
     basic_descr = "{}: {}/{} ({:.0f}%)".format(short_name, current_page, total, percent)
 
-    if not (rate := pages_per_day(reversed(log))):
-        print(basic_descr)
-    else:
+    rate = pages_per_day(log)
+    if rate and sane_rate(rate):
         pages_left = total - current_page
         time_left = pages_left/rate
-
-        rate_str = format_rate(rate)
-        print(basic_descr+" - {}, {:.0f} days left".format(rate_str, time_left))
+        print(basic_descr+" - {}, {:.0f} days left".format(format_rate(rate), time_left))
+    else:
+        print(basic_descr)
 
 #TODO: use pathlib
 default_zhist_path = str(XDG_DATA_HOME/"zathura/history")
