@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+import argparse
+
+from pdfstat import pdfstat
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.dates import DateFormatter, DayLocator, MonthLocator
+
+def plot(data, outpath):
+    data = np.array(data)
+    fig, ax = plt.subplots()
+    ax.plot(data[:,1], data[:,0], label='linear')
+    # ax.set_xlabel('x label')
+    # ax.set_ylabel('y label')
+    ax.set_title("The Art of Electronics", x=0.5, y=0.9, fontsize=16)
+
+    # ax.grid()
+    # bordercol = ""
+    # ax.tick_params(color=bordercol, labelcolor=bordercol)
+    # for spine in ax.spines.values():
+    #     spine.set_edgecolor(bordercol)
+
+    ax.xaxis.set_major_locator(MonthLocator())
+    ax.xaxis.set_minor_locator(DayLocator(interval=5))
+    ax.xaxis.set_major_formatter(DateFormatter('%b'))
+
+    plt.setp(ax.get_xticklabels(), rotation=30, ha="right", rotation_mode="anchor")
+    fig.tight_layout()
+    fig.savefig(outpath, transparent=True)
+
+parser = argparse.ArgumentParser(description="Make a graph displaying progress of reading documents.")
+parser.add_argument("doc", type=pdfstat.normalized_path, help="The document")
+parser.add_argument("out", help="The output file.")
+args = parser.parse_args()
+
+ps = pdfstat.PdfStat()
+p = pdfstat.normalized_path(args.doc)
+if ps.db.is_tracked(p):
+    plot(ps.db.doc_data(p), args.out)

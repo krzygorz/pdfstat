@@ -9,7 +9,6 @@ from xdg import XDG_DATA_HOME
 from pdfstat.database import SqlDB, LogEntry
 from pdfstat.documents import ZathuraHistory, HistKeyError, HistFileNotFoundError, total_pages
 from pdfstat.rate import pages_per_day
-from pdfstat.plot import plot
 
 def trunc(string, n, ell='.. '):
     maxlen = n-len(ell)
@@ -95,8 +94,6 @@ def cmd_track(app, path):
 def cmd_forget(app, path):
     if not app.forget(path):
         sys.exit("File is not tracked!")
-def cmd_graph(app, path, outpath):
-    plot(app.db.doc_data(path), outpath)
 
 # Uses abspath instead of realpath because that's how Zathura appears to normalize file names (ie no symlink resolution)
 def normalized_path(path):
@@ -117,10 +114,6 @@ def main():
     parser_forget = subparsers.add_parser('forget', help="Remove the document's data from database.")
     parser_forget.add_argument('path', type=normalized_path)
 
-    parser_plot = subparsers.add_parser('graph', help="Plot a graph showing your progress over time.")
-    parser_plot.add_argument('path', type=normalized_path, help='Path to the document.')
-    parser_plot.add_argument('outpath', type=os.path.expanduser, help='Path for the graph.')
-
     args = parser.parse_args()
     zathura_hist_path = args.zhist or os.path.expanduser(default_zhist_path)
     db_path = args.db or os.path.expanduser(default_db_path)
@@ -138,8 +131,6 @@ def main():
             cmd_track(app, args.path)
         elif args.command == 'forget':
             cmd_forget(app, args.path)
-        elif args.command == 'graph':
-            cmd_graph(app, args.path, args.outpath)
     except HistKeyError as e:
         error("Error: \"{}\" not found in zathura history!".format(e.path), 2)
 
