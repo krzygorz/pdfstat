@@ -13,7 +13,6 @@ class SqlDB:
         os.makedirs(os.path.dirname(db_path), exist_ok=True)
         self._conn = sqlite3.connect(str(db_path))
         self._conn.execute("CREATE TABLE IF NOT EXISTS logs (path text, page integer, time integer)")
-        # self._conn.execute("CREATE TABLE IF NOT EXISTS metadata (path text, numpages integer)")
     def tracked(self):
         return [a for (a,) in self._conn.execute("SELECT DISTINCT path FROM logs")]
     def doc_data(self, path):

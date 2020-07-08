@@ -5,14 +5,25 @@ from pdfstat import pdfstat
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.dates import DateFormatter, DayLocator, MonthLocator
+from datetime import datetime
 
-def plot(data, outpath):
+def plot_data(data, ax):
     data = np.array(data)
+    ax.plot(data[:,1], data[:,0])
+def plot_goal(first, last, goal, ax):
+    # TODO: Use axline once matplotlib 3.3 is released
+    # ax.axline((data[0],0), slope=goal_rate)
+    delta_time = last.time-first.time
+    ax.plot([first.time, last.time], [first.page, first.page + delta_time.days*goal], '--')
+def make_plot(data, outpath, goal_rate):
     fig, ax = plt.subplots()
-    ax.plot(data[:,1], data[:,0], label='linear')
+    plot_data(data, ax)
+    if goal_rate:
+        plot_goal(data[-1], data[0], goal_rate, ax)
+    ax.set_title("The Art of Electronics", x=0.5, y=0.9, fontsize=16)
+
     # ax.set_xlabel('x label')
     # ax.set_ylabel('y label')
-    ax.set_title("The Art of Electronics", x=0.5, y=0.9, fontsize=16)
 
     # ax.grid()
     # bordercol = ""
@@ -31,9 +42,12 @@ def plot(data, outpath):
 parser = argparse.ArgumentParser(description="Make a graph displaying progress of reading documents.")
 parser.add_argument("doc", type=pdfstat.normalized_path, help="The document")
 parser.add_argument("out", help="The output file.")
+parser.add_argument("--goal", help="Goal pages/day", type=float)
+parser.add_argument("--days", help="How many days to plot", default=30, type=int)
 args = parser.parse_args()
 
 ps = pdfstat.PdfStat()
 p = pdfstat.normalized_path(args.doc)
 if ps.db.is_tracked(p):
-    plot(ps.db.doc_data(p), args.out)
+    data = ps.db.doc_data(p)[:args.days] #FIXME: That's not how this works
+    make_plot(data, args.out, args.goal)
