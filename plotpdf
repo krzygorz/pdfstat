@@ -4,8 +4,10 @@ import argparse
 from pdfstat import pdfstat
 import numpy as np
 import matplotlib.pyplot as plt
+import sys
 from matplotlib.dates import DateFormatter, DayLocator, MonthLocator
 from datetime import datetime
+from itertools import takewhile
 
 def plot_data(data, ax):
     data = np.array(data)
@@ -39,15 +41,22 @@ def make_plot(data, outpath, goal_rate):
     fig.tight_layout()
     fig.savefig(outpath, transparent=True)
 
-parser = argparse.ArgumentParser(description="Make a graph displaying progress of reading documents.")
-parser.add_argument("doc", type=pdfstat.normalized_path, help="The document")
-parser.add_argument("out", help="The output file.")
-parser.add_argument("--goal", help="Goal pages/day", type=float)
-parser.add_argument("--days", help="How many days to plot", default=30, type=int)
-args = parser.parse_args()
+def get_data(path, days):
+    ps = pdfstat.PdfStat()
+    p = pdfstat.normalized_path(path)
+    if not ps.db.is_tracked(p):
+        sys.exit("Document not tracked!")
+    all_data = ps.db.doc_data(p)
+    now = datetime.now()
+    return list(takewhile(lambda x: (now-x.time).days < days, all_data))
+def parse_args():
+    parser = argparse.ArgumentParser(description="Make a graph displaying progress of reading documents.")
+    parser.add_argument("doc", type=pdfstat.normalized_path, help="The document")
+    parser.add_argument("out", help="The output file.")
+    parser.add_argument("--goal", help="Goal pages/day", type=float)
+    parser.add_argument("--days", help="How many days to plot", default=30, type=int)
+    return parser.parse_args()
 
-ps = pdfstat.PdfStat()
-p = pdfstat.normalized_path(args.doc)
-if ps.db.is_tracked(p):
-    data = ps.db.doc_data(p)[:args.days] #FIXME: That's not how this works
-    make_plot(data, args.out, args.goal)
+args = parse_args()
+data = get_data(args.doc, args.days)
+make_plot(data, args.out, args.goal)
