@@ -34,7 +34,7 @@ def make_plot(data, outpath, goal_rate):
     #     spine.set_edgecolor(bordercol)
 
     ax.xaxis.set_major_locator(MonthLocator())
-    ax.xaxis.set_minor_locator(DayLocator(interval=5))
+    ax.xaxis.set_minor_locator(DayLocator(interval=2))
     ax.xaxis.set_major_formatter(DateFormatter('%b'))
 
     plt.setp(ax.get_xticklabels(), rotation=30, ha="right", rotation_mode="anchor")
