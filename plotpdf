@@ -3,41 +3,40 @@ import argparse
 
 from pdfstat import pdfstat
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import sys
 from matplotlib.dates import DateFormatter, DayLocator, MonthLocator
-from datetime import datetime
+from datetime import datetime, timedelta
 from itertools import takewhile
 
-def plot_data(data, ax):
-    data = np.array(data)
-    ax.plot(data[:,1], data[:,0])
-def plot_goal(first, last, goal, ax):
-    # TODO: Use axline once matplotlib 3.3 is released
-    # ax.axline((data[0],0), slope=goal_rate)
-    delta_time = last.time-first.time
-    ax.plot([first.time, last.time], [first.page, first.page + delta_time.days*goal], '--')
+def plot_data(ax, data):
+    ax.plot(data['time'], data['page'])
+def plot_goal(ax, x, limit, goal):
+    page, time = x
+    maxtime = limit['time']
+    delta = maxtime - time
+    print(maxtime)
+    ax.plot([time, maxtime], [page, page+delta.days*goal], linestyle='--')
+
+    # TODO: figure if plt.axline can be used
+    # delta = timedelta(hours=1)
+    # x = (time.to_datetime64(), page)
+    # y = ((time+delta).to_datetime64(), page + goal)
+    # print(x,y)
+    # plt.axline(x,y)
 def make_plot(data, outpath, goal_rate):
     fig, ax = plt.subplots()
-    plot_data(data, ax)
+    plot_data(ax, data)
     if goal_rate:
-        plot_goal(data[-1], data[0], goal_rate, ax)
+        plot_goal(ax, data.iloc[-1], data.iloc[0], goal_rate)
     ax.set_title("The Art of Electronics", x=0.5, y=0.9, fontsize=16)
-
-    # ax.set_xlabel('x label')
-    # ax.set_ylabel('y label')
-
-    # ax.grid()
-    # bordercol = ""
-    # ax.tick_params(color=bordercol, labelcolor=bordercol)
-    # for spine in ax.spines.values():
-    #     spine.set_edgecolor(bordercol)
 
     ax.xaxis.set_major_locator(MonthLocator())
     ax.xaxis.set_minor_locator(DayLocator(interval=2))
     ax.xaxis.set_major_formatter(DateFormatter('%b'))
-
     plt.setp(ax.get_xticklabels(), rotation=30, ha="right", rotation_mode="anchor")
+
     fig.tight_layout()
     fig.savefig(outpath, transparent=True)
 
@@ -48,7 +47,9 @@ def get_data(path, days):
         sys.exit("Document not tracked!")
     all_data = ps.db.doc_data(p)
     now = datetime.now()
-    return list(takewhile(lambda x: (now-x.time).days < days, all_data))
+    return pd.DataFrame(takewhile(lambda x: (now-x.time).days < days, all_data))
+def normalize(data):
+    data['page'] -= data['page'].iloc[-1]
 def parse_args():
     parser = argparse.ArgumentParser(description="Make a graph displaying progress of reading documents.")
     parser.add_argument("doc", type=pdfstat.normalized_path, help="The document")
@@ -59,4 +60,6 @@ def parse_args():
 
 args = parse_args()
 data = get_data(args.doc, args.days)
+normalize(data)
+# print(data)
 make_plot(data, args.out, args.goal)
