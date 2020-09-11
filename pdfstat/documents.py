@@ -11,7 +11,7 @@ import errno
 pdfinfo_re = re.compile(r"Pages:\s*(\d+)")
 def total_pages(path):
     if os.path.exists(path):
-        o = subprocess.check_output(["pdfinfo", path]).decode()
+        o = subprocess.check_output(["pdfinfo", path], stderr=subprocess.DEVNULL).decode()
         return int(re.search(pdfinfo_re, o).group(1))
     else:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)

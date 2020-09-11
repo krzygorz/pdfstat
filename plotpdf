@@ -12,6 +12,7 @@ from itertools import takewhile
 
 def plot_data(ax, data):
     ax.plot(data['time'], data['page'])
+    # ax.plot(data['time']+timedelta(days=7/2), data['page'].rolling(7).mean().resample('H').interpolate('cubic'))
 def plot_goal(ax, x, limit, goal):
     page, time = x
     maxtime = limit['time']
@@ -28,6 +29,7 @@ def plot_goal(ax, x, limit, goal):
 def make_plot(data, outpath, goal_rate):
     fig, ax = plt.subplots()
     plot_data(ax, data)
+    # data.plot(ax=ax, legend=False)
     if goal_rate:
         plot_goal(ax, data.iloc[-1], data.iloc[0], goal_rate)
     ax.set_title("The Art of Electronics", x=0.5, y=0.9, fontsize=16)
