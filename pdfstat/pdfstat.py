@@ -4,7 +4,7 @@ import sys
 import argparse
 from datetime import datetime
 
-from xdg import XDG_DATA_HOME
+from xdg.BaseDirectory import xdg_data_home
 
 from pdfstat.database import SqlDB, LogEntry
 from pdfstat.documents import ZathuraHistory, HistKeyError, HistFileNotFoundError, total_pages
@@ -37,8 +37,8 @@ def printStats(path, log, total):
         print(basic_descr)
 
 #TODO: use pathlib
-default_zhist_path = str(XDG_DATA_HOME/"zathura/history")
-default_db_path = str(XDG_DATA_HOME/"pdfstat.db")
+default_zhist_path = os.path.join(xdg_data_home, "zathura/history")
+default_db_path = os.path.join(xdg_data_home, "pdfstat.db")
 
 class PdfStat:
     def __init__(self, db_path=default_db_path, zhist_path=default_zhist_path):

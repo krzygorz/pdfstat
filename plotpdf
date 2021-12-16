@@ -32,7 +32,7 @@ def make_plot(data, outpath, goal_rate):
     # data.plot(ax=ax, legend=False)
     if goal_rate:
         plot_goal(ax, data.iloc[-1], data.iloc[0], goal_rate)
-    ax.set_title("The Art of Electronics", x=0.5, y=0.9, fontsize=16)
+    #ax.set_title("The Art of Electronics", x=0.5, y=0.9, fontsize=16)
 
     ax.xaxis.set_major_locator(MonthLocator())
     ax.xaxis.set_minor_locator(DayLocator(interval=2))
